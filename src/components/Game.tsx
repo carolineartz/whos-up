@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Undo2, UserMinus, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { canAdvance, cycleLength, upNext, type ListId, type RotationState } from "@/lib/rotation"
@@ -28,6 +28,16 @@ export function Game({ state, canUndo, onKick, onRemove, onUndo, onEdit }: Props
   const onDeck = preview[1]
   const rest = preview.slice(2)
   const kickable = canAdvance(state)
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [scrolledFromTop, setScrolledFromTop] = useState(false)
+  const handleUpcomingScroll = () => {
+    const el = scrollRef.current
+    if (el) setScrolledFromTop(el.scrollTop > 4)
+  }
+  const upcomingMask = scrolledFromTop
+    ? "linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%)"
+    : "linear-gradient(to bottom, black 0%, black 70%, transparent 100%)"
 
   return (
     <main className="mx-auto flex h-dvh w-full max-w-md flex-col px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
@@ -80,13 +90,10 @@ export function Game({ state, canUndo, onKick, onRemove, onUndo, onEdit }: Props
             <section className="mt-30 flex min-h-0 flex-1 flex-col">
               <Label>Upcoming</Label>
               <div
+                ref={scrollRef}
+                onScroll={handleUpcomingScroll}
                 className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1"
-                style={{
-                  maskImage:
-                    "linear-gradient(to bottom, black 0%, black 70%, transparent 100%)",
-                  WebkitMaskImage:
-                    "linear-gradient(to bottom, black 0%, black 70%, transparent 100%)",
-                }}
+                style={{ maskImage: upcomingMask, WebkitMaskImage: upcomingMask }}
               >
                 <ul className="flex flex-col">
                   {rest.map((slot, i) => (
