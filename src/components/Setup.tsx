@@ -27,9 +27,7 @@ export function Setup({ initialList1 = [], initialList2 = [], onStart, onCancel 
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-6 px-5 pt-8 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       <header className="space-y-1">
         <h1 className="text-3xl font-medium tracking-tight">Who's Up?</h1>
-        <p className="text-sm text-muted-foreground">
-          Paste each list, one name per line.
-        </p>
+        <p className="text-sm text-muted-foreground">One name per line.</p>
       </header>
 
       <div className="flex flex-1 flex-col gap-5">
