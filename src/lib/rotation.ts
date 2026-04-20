@@ -57,11 +57,3 @@ export function removeAt(state: RotationState, list: ListId, index: number): Rot
 export function canAdvance(state: RotationState): boolean {
   return state.nextList === 1 ? state.list1.length > 0 : state.list2.length > 0
 }
-
-export function cycleLength(state: RotationState): number {
-  const a = state.list1.length
-  const b = state.list2.length
-  if (a === 0 || b === 0) return 0
-  const gcd = (x: number, y: number): number => (y === 0 ? x : gcd(y, x % y))
-  return (2 * a * b) / gcd(a, b)
-}

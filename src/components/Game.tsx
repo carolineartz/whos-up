@@ -1,7 +1,9 @@
 import { useMemo, useRef, useState } from "react"
 import { Undo2, UserMinus, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { canAdvance, cycleLength, upNext, type ListId, type RotationState } from "@/lib/rotation"
+import { canAdvance, upNext, type ListId, type RotationState } from "@/lib/rotation"
+
+const UPCOMING_PREVIEW_COUNT = 60
 
 type Props = {
   state: RotationState
@@ -16,8 +18,7 @@ type Slot = { name: string; list: ListId; sourceIndex: number }
 
 export function Game({ state, canUndo, onKick, onRemove, onUndo, onEdit }: Props) {
   const preview = useMemo<Slot[]>(() => {
-    const count = Math.max(cycleLength(state), 2)
-    const entries = upNext(state, count)
+    const entries = upNext(state, UPCOMING_PREVIEW_COUNT)
     return entries.map((e) => {
       const source = e.list === 1 ? state.list1 : state.list2
       return { name: e.name, list: e.list, sourceIndex: source.indexOf(e.name) }
