@@ -14,14 +14,17 @@ type Props = {
   onEdit: () => void
 }
 
-type Slot = { name: string; list: ListId; sourceIndex: number }
+type Slot = { name: string; list: ListId; sourceIndex: number; firstTurn: boolean }
 
 export function Game({ state, canUndo, onKick, onRemove, onUndo, onEdit }: Props) {
   const preview = useMemo<Slot[]>(() => {
     const entries = upNext(state, UPCOMING_PREVIEW_COUNT)
+    const seen = new Set<string>()
     return entries.map((e) => {
       const source = e.list === 1 ? state.list1 : state.list2
-      return { name: e.name, list: e.list, sourceIndex: source.indexOf(e.name) }
+      const firstTurn = !seen.has(e.name)
+      seen.add(e.name)
+      return { name: e.name, list: e.list, sourceIndex: source.indexOf(e.name), firstTurn }
     })
   }, [state])
 
@@ -76,7 +79,7 @@ export function Game({ state, canUndo, onKick, onRemove, onUndo, onEdit }: Props
             <section className="mt-8">
               <Label>On deck</Label>
               <div className="mt-1 flex items-center justify-between gap-3">
-                <h3 className="animate-[soft-pulse_2s_ease-in-out_infinite] text-3xl font-medium break-words">
+                <h3 className="animate-[soft-pulse_1.2s_ease-in-out_infinite] text-3xl font-medium break-words">
                   {onDeck.name}
                 </h3>
                 <RemoveButton
@@ -87,8 +90,20 @@ export function Game({ state, canUndo, onKick, onRemove, onUndo, onEdit }: Props
             </section>
           )}
 
+          <div className="my-6 flex justify-center">
+            <button
+              type="button"
+              onClick={onKick}
+              disabled={!kickable}
+              aria-label="Kicked"
+              className="h-24 w-24 transition-transform active:scale-95 disabled:opacity-40 disabled:active:scale-100"
+            >
+              <img src="/kick-button.svg" alt="" className="h-full w-full" draggable={false} />
+            </button>
+          </div>
+
           {rest.length > 0 && (
-            <section className="mt-30 flex min-h-0 flex-1 flex-col">
+            <section className="flex min-h-0 flex-1 flex-col">
               <Label>Upcoming</Label>
               <div
                 ref={scrollRef}
@@ -100,9 +115,22 @@ export function Game({ state, canUndo, onKick, onRemove, onUndo, onEdit }: Props
                   {rest.map((slot, i) => (
                     <li
                       key={`${slot.list}-${slot.name}-${i}`}
-                      className="flex items-center justify-between gap-3 border-b border-border/40 py-2.5 last:border-none"
+                      className="flex items-center gap-3 border-b border-border/40 py-2.5 last:border-none"
                     >
-                      <span className="truncate text-lg">{slot.name}</span>
+                      <span
+                        className={`w-7 shrink-0 text-right text-2xl font-semibold tabular-nums ${
+                          slot.firstTurn ? "text-primary" : "text-muted-foreground/50"
+                        }`}
+                      >
+                        {i + 2}
+                      </span>
+                      <span
+                        className={`flex-1 truncate text-lg ${
+                          slot.firstTurn ? "text-muted-foreground" : "text-muted-foreground/50"
+                        }`}
+                      >
+                        {slot.name}
+                      </span>
                       <RemoveButton
                         onClick={() => onRemove(slot.list, slot.sourceIndex)}
                         size="tiny"
@@ -126,15 +154,6 @@ export function Game({ state, canUndo, onKick, onRemove, onUndo, onEdit }: Props
         </div>
       )}
 
-      <div className="mt-6 pt-3">
-        <Button
-          className="h-16 w-full text-lg font-medium"
-          onClick={onKick}
-          disabled={!kickable}
-        >
-          Kicked
-        </Button>
-      </div>
     </main>
   )
 }
