@@ -1,74 +1,125 @@
 import { useCallback, useEffect, useState } from "react"
-import { advance, init, removeAt, type ListId, type RotationState } from "@/lib/rotation"
+import {
+  addToList,
+  init,
+  markKicked,
+  removeAt,
+  reorderList,
+  type ListId,
+  type RotationState,
+} from "@/lib/rotation"
 
 const STORAGE_KEY = "whos-up:v1"
+const HISTORY_CAP = 50
 
 type Stored = {
   state: RotationState | null
-  previous: RotationState | null
+  past: RotationState[]
+  future: RotationState[]
 }
 
 function load(): Stored {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { state: null, previous: null }
-    const parsed = JSON.parse(raw) as Stored
+    if (!raw) return { state: null, past: [], future: [] }
+    const parsed = JSON.parse(raw) as Partial<Stored> & {
+      previous?: RotationState | null
+    }
     return {
       state: parsed.state ?? null,
-      previous: parsed.previous ?? null,
+      // Migrate the old single-step shape ({ state, previous }) into a one-entry past.
+      past: Array.isArray(parsed.past)
+        ? parsed.past
+        : parsed.previous
+          ? [parsed.previous]
+          : [],
+      future: Array.isArray(parsed.future) ? parsed.future : [],
     }
   } catch {
-    return { state: null, previous: null }
+    return { state: null, past: [], future: [] }
   }
 }
 
 export function useRotation() {
-  const [state, setState] = useState<RotationState | null>(() => load().state)
-  const [previous, setPrevious] = useState<RotationState | null>(() => load().previous)
+  const initial = load()
+  const [state, setState] = useState<RotationState | null>(initial.state)
+  const [past, setPast] = useState<RotationState[]>(initial.past)
+  const [future, setFuture] = useState<RotationState[]>(initial.future)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ state, previous }))
-  }, [state, previous])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ state, past, future }))
+  }, [state, past, future])
+
+  // Apply a mutation, recording it on the undo stack (skipping no-ops).
+  const apply = useCallback((fn: (s: RotationState) => RotationState) => {
+    setState((current) => {
+      if (!current) return current
+      const next = fn(current)
+      if (next === current) return current
+      setPast((p) => [...p, current].slice(-HISTORY_CAP))
+      setFuture([])
+      return next
+    })
+  }, [])
 
   const start = useCallback((list1: string[], list2: string[]) => {
-    setPrevious(null)
+    setPast([])
+    setFuture([])
     setState(init(list1, list2))
   }, [])
 
-  const kick = useCallback(() => {
-    setState((current) => {
-      if (!current) return current
-      setPrevious(current)
-      return advance(current)
-    })
-  }, [])
+  const kicked = useCallback(
+    (list: ListId, index: number) => apply((s) => markKicked(s, list, index)),
+    [apply],
+  )
 
-  const remove = useCallback((list: ListId, index: number) => {
-    setState((current) => {
-      if (!current) return current
-      setPrevious(current)
-      return removeAt(current, list, index)
-    })
-  }, [])
+  const reorder = useCallback(
+    (list: ListId, newRoundOrder: string[]) =>
+      apply((s) => reorderList(s, list, newRoundOrder)),
+    [apply],
+  )
+
+  const add = useCallback(
+    (list: ListId, name: string) => apply((s) => addToList(s, list, name)),
+    [apply],
+  )
+
+  const remove = useCallback(
+    (list: ListId, index: number) => apply((s) => removeAt(s, list, index)),
+    [apply],
+  )
 
   const undo = useCallback(() => {
-    if (!previous) return
-    setState(previous)
-    setPrevious(null)
-  }, [previous])
+    if (past.length === 0 || !state) return
+    setState(past[past.length - 1])
+    setFuture((f) => [state, ...f])
+    setPast((p) => p.slice(0, -1))
+  }, [past, state])
+
+  const redo = useCallback(() => {
+    if (future.length === 0 || !state) return
+    setState(future[0])
+    setPast((p) => [...p, state].slice(-HISTORY_CAP))
+    setFuture((f) => f.slice(1))
+  }, [future, state])
 
   const reset = useCallback(() => {
-    setPrevious(null)
+    setPast([])
+    setFuture([])
     setState(null)
   }, [])
 
   return {
     state,
-    canUndo: previous !== null,
+    canUndo: past.length > 0,
+    canRedo: future.length > 0,
     start,
-    kick,
+    kicked,
+    reorder,
+    add,
     remove,
     undo,
+    redo,
     reset,
   }
 }

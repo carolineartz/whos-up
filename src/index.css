@@ -167,6 +167,14 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  /* Per-list underline colors (the dark-theme chart hues, used in light mode). */
+  --color-list-1: oklch(0.6192 0.2037 312.7283); /* pinky-purple */
+  --color-list-2: oklch(0.6261 0.1859 259.5957); /* bluey-purple */
+  /* Kicking / on-deck row tints (kicking darker). */
+  --color-tint-kick: oklch(0.9 0.07 356);
+  --color-tint-deck: oklch(0.9362 0.0366 353);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -213,11 +221,31 @@
   }
 }
 
-@keyframes soft-pulse {
+/* On-deck row: a light, flashing "in progress" look — faded at peak, gone at the trough. */
+@keyframes blink-deck {
   0%, 100% {
-    opacity: 1;
+    opacity: 0.6;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0;
+  }
+}
+
+/* Blink just the underline color, fully gone at the trough (next-up-per-group cue). */
+@keyframes underline-blink-1 {
+  0%, 100% {
+    text-decoration-color: var(--color-list-1);
+  }
+  50% {
+    text-decoration-color: transparent;
+  }
+}
+
+@keyframes underline-blink-2 {
+  0%, 100% {
+    text-decoration-color: var(--color-list-2);
+  }
+  50% {
+    text-decoration-color: transparent;
   }
 }

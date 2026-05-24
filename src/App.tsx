@@ -1,34 +1,27 @@
-import { useState } from "react"
 import { Setup } from "@/components/Setup"
 import { Game } from "@/components/Game"
 import { useRotation } from "@/hooks/useRotation"
 
 function App() {
-  const { state, canUndo, start, kick, remove, undo } = useRotation()
-  const [editing, setEditing] = useState(false)
+  const { state, canUndo, canRedo, start, kicked, reorder, add, remove, undo, redo, reset } =
+    useRotation()
 
-  if (!state || editing) {
-    return (
-      <Setup
-        initialList1={state?.list1 ?? []}
-        initialList2={state?.list2 ?? []}
-        onStart={(l1, l2) => {
-          start(l1, l2)
-          setEditing(false)
-        }}
-        onCancel={state ? () => setEditing(false) : undefined}
-      />
-    )
+  if (!state) {
+    return <Setup onStart={start} />
   }
 
   return (
     <Game
       state={state}
       canUndo={canUndo}
-      onKick={kick}
+      canRedo={canRedo}
+      onKicked={kicked}
+      onReorder={reorder}
+      onAdd={add}
       onRemove={remove}
       onUndo={undo}
-      onEdit={() => setEditing(true)}
+      onRedo={redo}
+      onClear={reset}
     />
   )
 }
