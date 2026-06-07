@@ -227,7 +227,7 @@
     opacity: 0.6;
   }
   50% {
-    opacity: 0;
+    opacity: 0.2;
   }
 }
 
@@ -247,5 +247,17 @@
   }
   50% {
     text-decoration-color: transparent;
+  }
+}
+
+/* Brief highlight pulse after a successful drag-drop reorder. */
+@keyframes drop-highlight {
+  0% {
+    background-color: var(--color-primary);
+    opacity: 0.25;
+  }
+  100% {
+    background-color: var(--color-primary);
+    opacity: 0;
   }
 }

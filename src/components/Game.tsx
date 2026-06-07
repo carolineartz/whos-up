@@ -73,6 +73,14 @@ export function Game({
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [adding, setAdding] = useState(false)
+  const [justDropped, setJustDropped] = useState<string | null>(null)
+
+  // Clear the drop highlight after animation completes.
+  useEffect(() => {
+    if (!justDropped) return
+    const timer = setTimeout(() => setJustDropped(null), 400)
+    return () => clearTimeout(timer)
+  }, [justDropped])
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -92,6 +100,7 @@ export function Game({
     const newRoundOrder = moved.filter((s) => s.list === list).map((s) => s.name)
     // Dropping at the very top makes this person Up (and flips the kicking group).
     onReorder(list, newRoundOrder, to === 0)
+    setJustDropped(active.id as string)
   }
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -176,6 +185,7 @@ export function Game({
                       | "deck"
                       | undefined,
                     blink: i === 2 || i === 3,
+                    highlight: justDropped === slot.name,
                     open: openIndex === i,
                     onOpen: () => setOpenIndex(i),
                     onClose: () => setOpenIndex((c) => (c === i ? null : c)),
@@ -400,6 +410,7 @@ type RowProps = {
   label: string | null
   tone: "kick" | "deck" | undefined
   blink: boolean
+  highlight: boolean
   open: boolean
   onOpen: () => void
   onClose: () => void
@@ -430,6 +441,7 @@ function Row({
   label,
   tone,
   blink,
+  highlight,
   open,
   onOpen,
   onClose,
@@ -493,6 +505,12 @@ function Row({
           >
             {tone && (
               <div aria-hidden className="pointer-events-none absolute inset-0 bg-tint-kick" />
+            )}
+            {highlight && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 animate-[drop-highlight_400ms_ease-out_forwards]"
+              />
             )}
             <div className="relative flex items-center gap-1 py-2 pr-1 pl-3">
           <div
