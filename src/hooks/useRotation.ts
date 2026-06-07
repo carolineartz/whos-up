@@ -5,6 +5,7 @@ import {
   markKicked,
   removeAt,
   reorderList,
+  swapUpAndDeck,
   type ListId,
   type RotationState,
 } from "@/lib/rotation"
@@ -74,8 +75,8 @@ export function useRotation() {
   )
 
   const reorder = useCallback(
-    (list: ListId, newRoundOrder: string[]) =>
-      apply((s) => reorderList(s, list, newRoundOrder)),
+    (list: ListId, newRoundOrder: string[], makeUp = false) =>
+      apply((s) => reorderList(s, list, newRoundOrder, makeUp)),
     [apply],
   )
 
@@ -88,6 +89,8 @@ export function useRotation() {
     (list: ListId, index: number) => apply((s) => removeAt(s, list, index)),
     [apply],
   )
+
+  const swap = useCallback(() => apply(swapUpAndDeck), [apply])
 
   const undo = useCallback(() => {
     if (past.length === 0 || !state) return
@@ -118,6 +121,7 @@ export function useRotation() {
     reorder,
     add,
     remove,
+    swap,
     undo,
     redo,
     reset,

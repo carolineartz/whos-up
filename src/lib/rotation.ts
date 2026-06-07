@@ -58,6 +58,12 @@ export function canAdvance(state: RotationState): boolean {
   return state.nextList === 1 ? state.list1.length > 0 : state.list2.length > 0
 }
 
+// Swap the current kicker and the person on deck by flipping which list is next.
+export function swapUpAndDeck(state: RotationState): RotationState {
+  if (state.list1.length === 0 || state.list2.length === 0) return state
+  return { ...state, nextList: state.nextList === 1 ? 2 : 1 }
+}
+
 // Build a list's names in current round order (starting at its pointer).
 function roundOrder(source: string[], idx: number): string[] {
   return Array.from({ length: source.length }, (_, i) => source[(idx + i) % source.length])
@@ -103,14 +109,17 @@ export function reorderList(
   state: RotationState,
   list: ListId,
   newRoundOrder: string[],
+  makeUp = false,
 ): RotationState {
   const source = list === 1 ? state.list1 : state.list2
   if (newRoundOrder.length !== source.length) return state
   const idx = list === 1 ? state.idx1 : state.idx2
   const newSource = fromRoundOrder(newRoundOrder, idx)
-  return list === 1
-    ? { ...state, list1: newSource }
-    : { ...state, list2: newSource }
+  const next =
+    list === 1 ? { ...state, list1: newSource } : { ...state, list2: newSource }
+  // Dragging to the very top also claims the kicking slot for this group, so a
+  // wrong-group restart can be corrected (this person is now Up, the old Up is on deck).
+  return makeUp ? { ...next, nextList: list } : next
 }
 
 // Add a (late-arriving) person to the bottom of a list's current round — they come up last

@@ -5,7 +5,7 @@ import { useRoster } from "@/hooks/useRoster"
 import type { ListId } from "@/lib/rotation"
 
 function App() {
-  const { state, canUndo, canRedo, start, kicked, reorder, add, remove, undo, redo, reset } =
+  const { state, canUndo, canRedo, start, kicked, reorder, add, remove, swap, undo, redo, reset } =
     useRotation()
   const { roster, remember } = useRoster()
 
@@ -34,6 +34,7 @@ function App() {
         add(list, name)
       }}
       onRemove={remove}
+      onSwap={swap}
       onUndo={undo}
       onRedo={redo}
       onClear={reset}

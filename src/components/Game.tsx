@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Undo2, Redo2, Plus, X, UserMinus, CircleCheck, GripVertical } from "lucide-react"
+import { Undo2, Redo2, Plus, X, UserMinus, CircleCheck } from "lucide-react"
 import {
   DndContext,
   closestCenter,
@@ -28,9 +28,10 @@ type Props = {
   canUndo: boolean
   canRedo: boolean
   onKicked: (list: ListId, index: number) => void
-  onReorder: (list: ListId, newRoundOrder: string[]) => void
+  onReorder: (list: ListId, newRoundOrder: string[], makeUp: boolean) => void
   onAdd: (list: ListId, name: string) => void
   onRemove: (list: ListId, index: number) => void
+  onSwap: () => void
   onUndo: () => void
   onRedo: () => void
   onClear: () => void
@@ -46,6 +47,7 @@ export function Game({
   onReorder,
   onAdd,
   onRemove,
+  onSwap,
   onUndo,
   onRedo,
   onClear,
@@ -88,7 +90,8 @@ export function Game({
     const list = current[from].list
     // Reorder only the dragged person's list, derived from the new flat order.
     const newRoundOrder = moved.filter((s) => s.list === list).map((s) => s.name)
-    onReorder(list, newRoundOrder)
+    // Dropping at the very top makes this person Up (and flips the kicking group).
+    onReorder(list, newRoundOrder, to === 0)
   }
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -485,28 +488,17 @@ function Row({
           <div
             className={cn(
               "relative",
-              tone === "deck" && "animate-[blink-deck_.75s_ease_infinite]",
+              tone === "deck" && "animate-[blink-deck_1s_ease_infinite]",
             )}
           >
             {tone && (
               <div aria-hidden className="pointer-events-none absolute inset-0 bg-tint-kick" />
             )}
-            <div className="relative flex items-center gap-1 py-2 pr-1 pl-1">
-          {draggable ? (
-            <button
-              data-no-swipe
-              type="button"
-              aria-label={`Drag ${slot.name}`}
-              className="flex h-9 w-7 shrink-0 touch-none items-center justify-center text-muted-foreground/40 active:text-foreground"
-              {...dragHandle}
-            >
-              <GripVertical className="h-4 w-4" />
-            </button>
-          ) : (
-            <span className="w-7 shrink-0" />
-          )}
-
-          <div className="min-w-0 flex-1 pl-1">
+            <div className="relative flex items-center gap-1 py-2 pr-1 pl-3">
+          <div
+            className={cn("min-w-0 flex-1", draggable && "touch-none cursor-grab active:cursor-grabbing")}
+            {...(draggable ? dragHandle : {})}
+          >
             {label && (
               <p className="text-[10px] font-medium tracking-widest text-primary uppercase">
                 {label}
@@ -520,8 +512,8 @@ function Row({
                 dim ? "text-muted-foreground/50" : "text-foreground",
                 blink &&
                   (slot.list === 1
-                    ? "animate-[underline-blink-1_.75s_ease_infinite]"
-                    : "animate-[underline-blink-2_.75s_ease_infinite]"),
+                    ? "animate-[underline-blink-1_1s_ease_infinite]"
+                    : "animate-[underline-blink-2_1s_ease_infinite]"),
               )}
             >
               {slot.name}
